@@ -8,7 +8,7 @@ Language-for-which-skills-to-gather is set by 'language'
 import aiohttp
 import asyncio
 from bs4 import BeautifulSoup
-import csv
+import aiofiles
 
 
 async def get_positions():
@@ -30,10 +30,9 @@ async def get_positions():
                     links = soup.select('.vacancy-serp-item .resume-search-item__name .g-user-content .bloko-link')
                     for link in links:
                         found_data.append(await get_details(link.attrs['href']))
-                    with open('popular_skills.csv', 'a', newline='', encoding='utf-8') as csvfile:
-                        csv_writer = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_MINIMAL)
+                    async with aiofiles.open('popular_skills.csv', mode='a', encoding='utf-8') as out_file:
                         for data in found_data:
-                            csv_writer.writerow(data)
+                            await out_file.write(','.join(data) + '\n')
             except:
                 pass
         print('Done. (salary, url, skills) are saved into "popular_skills.csv". \
