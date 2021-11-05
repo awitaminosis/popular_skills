@@ -3,13 +3,14 @@ Gathers popular skills.
 
 Script parses hh.ru and gathers skills-by-popular-demand.
 Writes them out into popular_skills.csv
-Language-for-which-skills-to-gather is set by 'language'
+Analyzes the skills by popularity
 """
 import aiohttp
 import asyncio
 from bs4 import BeautifulSoup
 import aiofiles
-
+from analyze import analyze
+from collections import Counter
 
 async def get_positions():
     """
@@ -17,12 +18,14 @@ async def get_positions():
     :return:
     """
     base_url = 'https://volgograd.hh.ru/search/vacancy?area=113&clusters=true&enable_snippets=true&ored_clusters=true&schedule=remote&text='
-    language = 'python'  # ← Set your programming language
+    language = input('What language to analyze?\n')  # ← Set your programming language. e.g. 'python'
+    request_first_page = base_url + language
+    pages = await get_page_range(request_first_page)
 
     async with aiohttp.ClientSession() as session:
-        async for i in async_range(39):  # ← Number was true for python. Could vary
+        async for i in async_range(pages):
             try:
-                url = base_url + language + '&page=' + str(i)
+                url = request_first_page + '&page=' + str(i)
                 async with session.get(url) as response:
                     found_data = []
                     cont = await response.text()
@@ -35,8 +38,9 @@ async def get_positions():
                             await out_file.write(','.join(data) + '\n')
             except:
                 pass
-        print('Done. (salary, url, skills) are saved into "popular_skills.csv". \
-        Run "analyze.py" to analyze frequency.')
+        print('Done. (salary, url, skills) are saved into "popular_skills.csv".')
+        print('Skills by popularity:')
+        analyze()
 
 
 async def async_range(count):
@@ -47,6 +51,22 @@ async def async_range(count):
     """
     for i in range(count):
         yield i
+
+
+async def get_page_range(request_first_page):
+    """
+    Detects last page number
+    :param request_first_page:
+    :return:
+    """
+    async with aiohttp.ClientSession() as session:
+        async with session.get(request_first_page) as response:
+            cont = await response.text()
+            soup_first = BeautifulSoup(cont,'html.parser')
+            next_button = soup_first.find(lambda tag: get_last_page(tag))
+            last_page = next_button.previous_sibling.contents[3].text
+            last_page = int(last_page)
+            return last_page
 
 
 async def get_details(inner_url):
@@ -76,6 +96,12 @@ async def get_details(inner_url):
                 return [salary] + [inner_url] + [x.text for x in tags if type(x) is not str]
             except:
                 return ['<unknown>'] + ['<unknown>'] + ['<unknown>']
+
+
+def get_last_page(tag):
+    if tag.text != '' and tag.text != ' ' and tag.text == 'дальше':
+        return True
+    # $('.pager .bloko-form-spacer .bloko-button')
 
 
 def get_key_points(tag):
