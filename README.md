@@ -1,4 +1,4 @@
-###What is it for?
+### What is it for?
 It aims to help with solving of the major conundrum 'what to learn next'.
 
 ### Files
@@ -8,10 +8,10 @@ analyze.py - analyzes frequency of required skills
 ### Example
 ![example output](static/example_output.png)
 
-###Prerequisites
+### Prerequisites
 [Python](https://www.python.org/downloads/)
 
-###Installation
+### Installation
 1. Run cmd
 2. Go to a folder where the script would be installed ```cd Desktop/tmp```
 3. Clone the repo ```git clone https://github.com/awitaminosis/popular_skills```
